@@ -1,4 +1,10 @@
-"""Converts features to well known text. Explodes multipart features for """
+"""Converts features to well known text. Output will be generated in ArcGIS Pro project folder.
+ ArcGIS Toolbox script includes 4 parameters:
+
+Input - Shapefile or feature class to be converted to well known text.
+Output - name of output csv generated in project folder.
+Field - Input field which will be used as the primary key in the output.
+Explode Multipart - Checkbox which triggers multipart to singlepart conversion."""
 
 import pandas as pd
 import arcpy
@@ -8,7 +14,7 @@ output = arcpy.GetParameter(1)
 key_field = arcpy.GetParameter(2)
 explode_multipart = arcpy.GetParameter(3)
 
-# WGS84
+# use WGS84
 sr = arcpy.SpatialReference(4326)
 # output format
 df = pd.DataFrame(columns=['key', 'wkt'])
@@ -16,11 +22,11 @@ df = pd.DataFrame(columns=['key', 'wkt'])
 # eliminate holes
 arcpy.EliminatePolygonPart_management(fc, 'in_memory\\temp_fc', condition='PERCENT', part_area_percent='10', part_option='CONTAINED_ONLY')
 
-# discover multipart features. fleetmind requires them to be separate features.
+# discover multipart features.
 arcpy.AddField_management('in_memory\\temp_fc', 'multipart', 'LONG')
 arcpy.CalculateField_management('in_memory\\temp_fc', 'multipart', "!Shape!.partCount", "PYTHON3", None)
 
-# Convert geometry to well known text and project in WGS84. Write to csv
+# Convert geometry to well known text and project in WGS84.
 i = 0
 arcpy.AddMessage(str(key_field))
 for row in arcpy.da.SearchCursor('in_memory\\temp_fc', ['SHAPE@WKT', '{}'.format(key_field), 'multipart'], spatial_reference=sr):
