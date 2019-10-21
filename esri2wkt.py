@@ -22,7 +22,8 @@ arcpy.CalculateField_management('in_memory\\temp_fc', 'multipart', "!Shape!.part
 
 # Convert geometry to well known text and project in WGS84. Write to csv
 i = 0
-for row in arcpy.da.SearchCursor('in_memory\\temp_fc', ['SHAPE@WKT', key_field, 'multipart'], spatial_reference=sr):
+arcpy.AddMessage(str(key_field))
+for row in arcpy.da.SearchCursor('in_memory\\temp_fc', ['SHAPE@WKT', '{}'.format(key_field), 'multipart'], spatial_reference=sr):
     # skip multipart
     if row[2] > 1:
         continue
@@ -38,7 +39,7 @@ arcpy.management.MultipartToSinglepart('temp_fc2', 'in_memory\\singlepart_fc')
 
 if explode_multipart is True:
     multipart = []
-    for row in arcpy.da.SearchCursor('in_memory\\singlepart_fc', ['SHAPE@WKT', key_field], spatial_reference=sr):
+    for row in arcpy.da.SearchCursor('in_memory\\singlepart_fc', ['SHAPE@WKT', '{}'.format(key_field)], spatial_reference=sr):
         multipart.append(row[1])
         wkt = row[0]
         route_name = row[1] + '-' + str(multipart.count(row[1]))
@@ -46,6 +47,7 @@ if explode_multipart is True:
         i += 1
         df.loc[i] = [route_name, wkt]
     arcpy.AddMessage('Multipart Features Processed: ')
+    arcpy.AddMessage(list(set(multipart)))
 
-arcpy.AddMessage(list(set(multipart)))
 df.to_csv('{}.csv'.format(output))
+
